@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pwsh -File:*)",
+      "Bash(pwsh -Command:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(if [ -f .gitignore ])",
+      "Bash(then echo \"exists\")",
+      "Bash(else echo \"missing\")",
+      "Bash(fi)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet remove:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet pack:*)",
+      "Bash(systeminfo:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"[System.Environment]::OSVersion.Version\")",
+      "Bash(Select-String -Pattern \"EnumAdapters1\" -Context 2,2)",
+      "Bash(powershell -Command \"dumpbin /exports C:\\Windows\\System32\\d3d11.dll 2>$null | Select-String ''CreateDirect3D11DeviceFromDXGIDevice''\")",
+      "WebSearch",
+      "WebFetch(domain:stackoverflow.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
