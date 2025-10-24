@@ -119,7 +119,16 @@ internal sealed class DirectXDeviceManager : IDisposable
             }
 
             // Get DXGI device interface
-            _dxgiDevice = _device!.QueryInterface<IDXGIDevice>();
+            // Note: We try to get IDXGIDevice3 first (required for Windows Graphics Capture on modern Windows)
+            // If that fails, fall back to IDXGIDevice
+            try
+            {
+                _dxgiDevice = _device!.QueryInterface<IDXGIDevice3>() ?? _device!.QueryInterface<IDXGIDevice>();
+            }
+            catch
+            {
+                _dxgiDevice = _device!.QueryInterface<IDXGIDevice>();
+            }
 
             if (_dxgiDevice == null)
             {

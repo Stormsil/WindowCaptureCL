@@ -1,9 +1,47 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>WindowCaptureCL</AssemblyName>
+    <RootNamespace>WindowCaptureCL</RootNamespace>
+    <Version>1.0.0</Version>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>WindowCaptureCL</PackageId>
+    <Authors>WindowCaptureCL Contributors</Authors>
+    <Company>WindowCaptureCL</Company>
+    <Product>WindowCaptureCL</Product>
+    <Description>High-performance .NET library for capturing screenshots from windows, monitors, and screen regions using Windows Graphics Capture API. Supports single-frame and continuous capture with FPS control, hardware acceleration via DirectX 11, and capture of obscured windows.</Description>
+    <PackageTags>screen-capture;screenshot;windows-graphics-capture;directx;capture;recording;window-capture;monitor-capture</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/windowcapturecl/windowcapturecl</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/windowcapturecl/windowcapturecl</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>Initial release with window, monitor, and region capture support.</PackageReleaseNotes>
+    <Copyright>Copyright © 2025 WindowCaptureCL Contributors</Copyright>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="nul" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.6.2" />
+    <PackageReference Include="Vortice.Win32" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+  </ItemGroup>
 
 </Project>

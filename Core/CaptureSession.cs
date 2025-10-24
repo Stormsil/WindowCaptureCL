@@ -178,6 +178,23 @@ internal sealed class CaptureSession : ICaptureSession
                             _captureSource.WindowHandle);
                     }
 
+                    // Check if window is visible and not minimized
+                    if (!WgcInterop.IsWindowVisible(_captureSource.WindowHandle))
+                    {
+                        throw new GraphicsDeviceException(
+                            $"Window with handle {_captureSource.WindowHandle} is not visible. " +
+                            "Windows Graphics Capture API can only capture visible windows. " +
+                            "Please ensure the window is not hidden or on a different desktop.");
+                    }
+
+                    if (WgcInterop.IsIconic(_captureSource.WindowHandle))
+                    {
+                        throw new GraphicsDeviceException(
+                            $"Window with handle {_captureSource.WindowHandle} is minimized. " +
+                            "Windows Graphics Capture API cannot capture minimized windows. " +
+                            "Please restore the window before capturing.");
+                    }
+
                     // Create GraphicsCaptureItem for window
                     _graphicsCaptureItem = GraphicsCaptureItemHelper.CreateForWindow(_captureSource.WindowHandle);
                 }
@@ -232,7 +249,6 @@ internal sealed class CaptureSession : ICaptureSession
 
             try
             {
-                var device = DirectXDeviceManager.Instance.Device;
                 var dxgiDevice = DirectXDeviceManager.Instance.DxgiDevice;
 
                 // Create Direct3D device for WinRT
@@ -248,67 +264,22 @@ internal sealed class CaptureSession : ICaptureSession
                         ex);
                 }
 
-                // Create frame pool
-                try
+                // Get the size from GraphicsCaptureItem - simplified, no Win32 fallback
+                var itemSize = _graphicsCaptureItem.Size;
+
+                if (itemSize.Width <= 0 || itemSize.Height <= 0)
                 {
-                    // Get the size from GraphicsCaptureItem
-                    var itemSize = _graphicsCaptureItem.Size;
-                    var originalSize = $"{itemSize.Width}x{itemSize.Height}";
-
-                    // For windows, if size is 0x0, try to get real size from Win32 API
-                    if (_captureSource.SourceType == CaptureSourceType.Window &&
-                        (itemSize.Width <= 0 || itemSize.Height <= 0))
-                    {
-                        if (WgcInterop.GetWindowRect(_captureSource.WindowHandle, out var rect))
-                        {
-                            var width = rect.Width;
-                            var height = rect.Height;
-
-                            if (width <= 0 || height <= 0)
-                            {
-                                throw new GraphicsDeviceException(
-                                    $"Window has invalid size from Win32 API: {width}x{height} (GraphicsCaptureItem reported: {originalSize}). " +
-                                    $"The window may be minimized or hidden. Please ensure the window is visible and not minimized.");
-                            }
-
-                            // Use the actual window size
-                            itemSize = new Windows.Graphics.SizeInt32 { Width = width, Height = height };
-                        }
-                        else
-                        {
-                            throw new GraphicsDeviceException(
-                                $"Failed to get window size via Win32 API (GraphicsCaptureItem reported: {originalSize}). " +
-                                $"The window may no longer exist or is not accessible.");
-                        }
-                    }
-                    else if (itemSize.Width <= 0 || itemSize.Height <= 0)
-                    {
-                        throw new GraphicsDeviceException(
-                            $"Capture target has invalid size: {itemSize.Width}x{itemSize.Height}. " +
-                            $"The capture target may not be accessible.");
-                    }
-
-                    // Attempt to create the frame pool
-                    _framePool = Direct3D11CaptureFramePool.Create(
-                        direct3DDevice,
-                        Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                        2, // number of buffers
-                        itemSize);
-                }
-                catch (GraphicsDeviceException)
-                {
-                    throw; // Re-throw our specific exception
-                }
-                catch (Exception ex)
-                {
-                    var itemSize = _graphicsCaptureItem?.Size;
-                    var sizeInfo = itemSize.HasValue ? $"{itemSize.Value.Width}x{itemSize.Value.Height}" : "unknown";
                     throw new GraphicsDeviceException(
-                        $"Failed to create Direct3D11CaptureFramePool (size: {sizeInfo}). " +
-                        $"Inner error: {ex.Message}. " +
-                        $"This may indicate that the capture target is invalid or Graphics Capture is not supported on this system.",
-                        ex);
+                        $"Capture target has invalid size: {itemSize.Width}x{itemSize.Height}. " +
+                        $"For windows, ensure the window is visible and not minimized before capturing.");
                 }
+
+                // Create frame pool - use CreateFreeThreaded for console apps without UI message loop
+                _framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
+                    direct3DDevice,
+                    Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    2, // number of buffers
+                    itemSize);
 
                 // Subscribe to FrameArrived event
                 _framePool.FrameArrived += OnFrameArrived;
@@ -316,20 +287,17 @@ internal sealed class CaptureSession : ICaptureSession
                 // Create capture session
                 _captureSession = _framePool.CreateCaptureSession(_graphicsCaptureItem);
 
-                // T122: Apply global IncludeCursor setting
+                // Apply cursor capture setting
                 _captureSession.IsCursorCaptureEnabled = CaptureConfiguration.IncludeCursor;
-
-                // T123: Note - DrawBorder setting is not supported by Windows Graphics Capture API
-                // The API does not expose border control for capture sessions
             }
             catch (GraphicsDeviceException)
             {
-                throw; // Re-throw our detailed exceptions
+                throw;
             }
             catch (Exception ex)
             {
                 throw new GraphicsDeviceException(
-                    "Failed to create Direct3D11 capture frame pool.",
+                    $"Failed to create capture frame pool. Error: {ex.Message}",
                     ex);
             }
         }
@@ -342,7 +310,9 @@ internal sealed class CaptureSession : ICaptureSession
         {
             using var frame = sender.TryGetNextFrame();
             if (frame == null)
+            {
                 return;
+            }
 
             // Get the D3D11 texture from the frame
             var surfaceTexture = Direct3D11Helper.GetD3D11Texture2DFromSurface(frame.Surface);

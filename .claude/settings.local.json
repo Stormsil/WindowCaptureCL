@@ -21,7 +21,19 @@
       "Bash(Select-String -Pattern \"EnumAdapters1\" -Context 2,2)",
       "Bash(powershell -Command \"dumpbin /exports C:\\Windows\\System32\\d3d11.dll 2>$null | Select-String ''CreateDirect3D11DeviceFromDXGIDevice''\")",
       "WebSearch",
-      "WebFetch(domain:stackoverflow.com)"
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(powershell -Command \"dumpbin /exports C:\\Windows\\System32\\d3d11.dll 2>&1 | Select-String ''CreateDirect3D11DeviceFromDXGIDevice''\")",
+      "Bash(git ls-tree:*)",
+      "Bash(samplesTestAppbinDebugnet8.0-windows10.0.19041.0TestApp.exe)",
+      "Bash(Select-String -Pattern \"DEBUG|Error|Exception\" -Context 0,2)",
+      "Bash(Select-String \"error\")",
+      "Bash(xcopy:*)",
+      "Bash(del:*)",
+      "Bash(ren:*)",
+      "Bash(del WindowCaptureCL.sln)",
+      "Bash(dotnet clean:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []
