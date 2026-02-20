@@ -5,7 +5,7 @@ namespace WindowCaptureCL.Infrastructure.WGC;
 /// <summary>
 /// Provides methods for enumerating monitors on the system.
 /// </summary>
-internal static class MonitorEnumerator
+public static class MonitorEnumerator
 {
     /// <summary>
     /// Gets all monitors currently connected to the system.
@@ -134,14 +134,41 @@ internal static class MonitorEnumerator
 /// <summary>
 /// Represents information about a monitor.
 /// </summary>
-internal sealed class MonitorInfo
+public sealed class MonitorInfo
 {
+    /// <summary>
+    /// Gets the monitor handle (HMONITOR).
+    /// </summary>
     public IntPtr Handle { get; }
+
+    /// <summary>
+    /// Gets the device name (e.g., "\\\\.\\DISPLAY1").
+    /// </summary>
     public string DeviceName { get; }
+
+    /// <summary>
+    /// Gets the monitor width in pixels.
+    /// </summary>
     public int Width { get; }
+
+    /// <summary>
+    /// Gets the monitor height in pixels.
+    /// </summary>
     public int Height { get; }
+
+    /// <summary>
+    /// Gets whether this is the primary monitor.
+    /// </summary>
     public bool IsPrimary { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MonitorInfo"/> class.
+    /// </summary>
+    /// <param name="handle">The monitor handle.</param>
+    /// <param name="deviceName">The device name.</param>
+    /// <param name="width">The monitor width in pixels.</param>
+    /// <param name="height">The monitor height in pixels.</param>
+    /// <param name="isPrimary">Whether this is the primary monitor.</param>
     public MonitorInfo(IntPtr handle, string deviceName, int width, int height, bool isPrimary)
     {
         Handle = handle;

@@ -93,6 +93,209 @@ frame.Save("region.png");
 
 ---
 
+## Window and Monitor Discovery Utilities
+
+WindowCaptureCL provides utility classes to help you discover windows and monitors before creating capture sessions.
+
+### WindowEnumerator Class
+
+Static utility class for finding and enumerating windows on the system.
+
+**Namespace**: `WindowCaptureCL.Infrastructure.WGC`
+
+#### Methods
+
+##### `FindWindow(IntPtr hwnd)`
+
+Finds a window by its handle (HWND).
+
+**Parameters:**
+- `hwnd` (IntPtr): The window handle
+
+**Returns:** `WindowInfo?` - Window information, or null if not found or invalid
+
+**Example:**
+```csharp
+using WindowCaptureCL.Infrastructure.WGC;
+
+IntPtr hwnd = /* your window handle */;
+var windowInfo = WindowEnumerator.FindWindow(hwnd);
+if (windowInfo != null)
+{
+    Console.WriteLine($"Window: {windowInfo.Title} ({windowInfo.Width}x{windowInfo.Height})");
+}
+```
+
+---
+
+##### `FindWindowByProcessId(int processId)`
+
+Finds a window by its process ID.
+
+**Parameters:**
+- `processId` (int): The process ID
+
+**Returns:** `WindowInfo?` - Window information, or null if not found
+
+**Example:**
+```csharp
+var processId = Process.GetCurrentProcess().Id;
+var windowInfo = WindowEnumerator.FindWindowByProcessId(processId);
+```
+
+---
+
+##### `FindWindowByTitle(string title)`
+
+Finds a window by its exact title.
+
+**Parameters:**
+- `title` (string): The exact window title (case-sensitive)
+
+**Returns:** `WindowInfo?` - Window information, or null if not found
+
+**Example:**
+```csharp
+var windowInfo = WindowEnumerator.FindWindowByTitle("Calculator");
+if (windowInfo != null)
+{
+    using var session = Capture.FromWindow(windowInfo.Handle);
+    // Capture the Calculator window
+}
+```
+
+---
+
+##### `FindWindowsByPartialTitle(string partialTitle)`
+
+Finds all windows whose title contains the specified text.
+
+**Parameters:**
+- `partialTitle` (string): The text to search for (case-insensitive)
+
+**Returns:** `List<WindowInfo>` - List of matching windows
+
+**Example:**
+```csharp
+var windows = WindowEnumerator.FindWindowsByPartialTitle("Visual Studio");
+foreach (var window in windows)
+{
+    Console.WriteLine($"Found: {window.Title}");
+}
+```
+
+---
+
+### WindowInfo Class
+
+Represents information about a window.
+
+**Namespace**: `WindowCaptureCL.Infrastructure.WGC`
+
+**Properties:**
+- `Handle` (IntPtr): The window handle (HWND)
+- `Title` (string): The window title
+- `Width` (int): The window width in pixels
+- `Height` (int): The window height in pixels
+
+---
+
+### MonitorEnumerator Class
+
+Static utility class for discovering and enumerating monitors/displays.
+
+**Namespace**: `WindowCaptureCL.Infrastructure.WGC`
+
+#### Methods
+
+##### `GetAllMonitors()`
+
+Gets all monitors currently connected to the system.
+
+**Returns:** `List<MonitorInfo>` - List of all monitors
+
+**Example:**
+```csharp
+using WindowCaptureCL.Infrastructure.WGC;
+
+var monitors = MonitorEnumerator.GetAllMonitors();
+foreach (var monitor in monitors)
+{
+    Console.WriteLine($"Monitor: {monitor.DeviceName} ({monitor.Width}x{monitor.Height}) Primary={monitor.IsPrimary}");
+}
+```
+
+---
+
+##### `GetPrimaryMonitor()`
+
+Gets the primary monitor.
+
+**Returns:** `MonitorInfo?` - Primary monitor information, or null if not found
+
+**Example:**
+```csharp
+var primary = MonitorEnumerator.GetPrimaryMonitor();
+if (primary != null)
+{
+    using var session = Capture.FromScreen(0);
+    // Capture primary monitor
+}
+```
+
+---
+
+##### `GetMonitorByIndex(int index)`
+
+Gets a monitor by its zero-based index.
+
+**Parameters:**
+- `index` (int): The zero-based monitor index
+
+**Returns:** `MonitorInfo?` - Monitor information, or null if index is invalid
+
+**Example:**
+```csharp
+var monitor = MonitorEnumerator.GetMonitorByIndex(1);
+if (monitor != null)
+{
+    Console.WriteLine($"Monitor 1: {monitor.Width}x{monitor.Height}");
+}
+```
+
+---
+
+##### `GetMonitorByDeviceName(string deviceName)`
+
+Gets a monitor by its device name.
+
+**Parameters:**
+- `deviceName` (string): The device name (e.g., "\\\\.\\DISPLAY1")
+
+**Returns:** `MonitorInfo?` - Monitor information, or null if not found
+
+**Example:**
+```csharp
+var monitor = MonitorEnumerator.GetMonitorByDeviceName("\\\\.\\DISPLAY2");
+```
+
+---
+
+### MonitorInfo Class
+
+Represents information about a monitor/display.
+
+**Namespace**: `WindowCaptureCL.Infrastructure.WGC`
+
+**Properties:**
+- `Handle` (IntPtr): The monitor handle (HMONITOR)
+- `DeviceName` (string): The device name (e.g., "\\\\.\\DISPLAY1")
+- `Width` (int): The monitor width in pixels
+- `Height` (int): The monitor height in pixels
+- `IsPrimary` (bool): Whether this is the primary monitor
+
+---
+
 ## Interface: ICaptureSession
 
 Represents an active capture session for a window, monitor, or screen region. Implements `IDisposable`.
@@ -900,3 +1103,186 @@ using var session = Capture.FromScreen(0);
 - **Framework**: .NET 8.0-windows10.0.19041.0
 - **Minimum Platform**: Windows 10 version 17763
 - **Graphics**: DirectX 11 compatible graphics hardware
+
+---
+
+## Troubleshooting
+
+### Windows Graphics Capture Not Available
+
+**Symptom:** `GraphicsCaptureNotSupportedException` is thrown
+
+**Causes:**
+1. **Windows Version Too Old**: WGC requires Windows 10 version 1803 or later
+   - Check: Run `winver` to see your Windows version
+   - Solution: Update Windows to at least version 1803
+
+2. **Remote Desktop Sessions**: WGC is not available in RDP sessions
+   - Check: Look for `mstsc.exe` process or check if you're connected via Remote Desktop
+   - Workaround: Use alternative capture methods (GDI+, BitBlt) or run locally
+
+3. **Virtual Machines**: Some VMs don't support WGC
+   - Check: Verify you're not running in a VM without proper graphics support
+   - Solution: Enable 3D acceleration in VM settings, or use physical hardware
+
+4. **Missing Windows SDK Components**: Required Windows Runtime components not installed
+   - Solution: Install Windows 10 SDK or repair .NET installation
+
+---
+
+### Frame Capture Failures
+
+**Symptom:** `FrameCaptureException` is thrown intermittently
+
+**Causes:**
+1. **Graphics Driver Issues**: Outdated or incompatible DirectX 11 drivers
+   - Solution: Update graphics drivers from manufacturer (NVIDIA, AMD, Intel)
+   - Check: Run `dxdiag` to verify DirectX 11 support
+
+2. **GPU Under Heavy Load**: Graphics card busy with other operations
+   - Solution: Reduce FPS, close GPU-intensive applications
+   - Monitor: Check GPU usage in Task Manager
+
+3. **Source Window Closed**: Window was closed during capture
+   - Solution: Subscribe to `CaptureStopped` event to detect source closure
+   - Prevention: Validate window handle before capture operations
+
+4. **Insufficient GPU Memory**: Large captures or high FPS exhausting VRAM
+   - Solution: Reduce capture resolution, lower FPS, or dispose frames promptly
+   - Monitor: Check GPU memory usage
+
+---
+
+### Protected Content Cannot Be Captured
+
+**Symptom:** Captured frames show black screen or missing content
+
+**Causes:**
+1. **DRM-Protected Content**: Movies, streaming video with copy protection
+   - This is by design - DRM prevents screen capture
+   - No workaround available
+
+2. **Some Fullscreen Games**: Games with anti-cheat or protection
+   - Try windowed mode or borderless windowed mode
+   - Some games explicitly block screen capture APIs
+
+3. **Hardware Overlay Content**: Content using hardware video overlays
+   - May not be captured by WGC
+   - Check application settings to disable hardware acceleration
+
+---
+
+### Permission and Access Issues
+
+**Symptom:** Cannot capture certain windows or monitors
+
+**Causes:**
+1. **Elevated Applications**: Trying to capture admin-privileged windows
+   - Solution: Run your application as administrator
+   - Check: Look for UAC shield icon on target application
+
+2. **System Windows**: Some system UI elements cannot be captured
+   - Windows Security dialogs, UAC prompts are protected
+   - This is a security feature with no workaround
+
+3. **Cross-Session Capture**: Trying to capture windows from different user sessions
+   - Not supported - can only capture windows in current session
+
+---
+
+### Performance Issues
+
+**Symptom:** Low frame rates, dropped frames, or high CPU usage
+
+**Causes:**
+1. **FPS Too High**: Requesting higher FPS than system can deliver
+   - Solution: Lower `MaxFramesPerSecond` in configuration
+   - Monitor: Check actual frame timestamps to see real FPS
+
+2. **Large Capture Area**: 4K monitors or large regions
+   - Solution: Reduce capture region size, use lower resolution monitor
+   - Consider: Downscaling captured images if full resolution not needed
+
+3. **Memory Leaks**: Not disposing `CapturedFrame` objects
+   - Solution: Always use `using` statements or explicit `Dispose()` calls
+   - Critical: Especially important at high FPS continuous capture
+
+4. **Synchronous Operations on UI Thread**: Blocking UI with capture operations
+   - Solution: Use `CaptureFrameAsync()` or run captures on background thread
+   - Use: Event-based continuous capture instead of polling
+
+---
+
+### DirectX Errors
+
+**Symptom:** `DirectXException` or `GraphicsDeviceException` thrown
+
+**Causes:**
+1. **DirectX 11 Not Available**: System lacks DirectX 11 support
+   - Check: Run `dxdiag` and verify DirectX 11 is available
+   - Solution: Update Windows and graphics drivers
+
+2. **Graphics Device Lost**: GPU driver crash or reset
+   - Symptom: All captures fail after working previously
+   - Solution: Restart application, update graphics drivers
+   - Prevention: Monitor `CaptureError` event for device lost errors
+
+3. **Multiple Graphics Devices**: Laptop with integrated + discrete GPU
+   - May cause device creation issues
+   - Solution: Force application to use specific GPU via Windows Settings > System > Display > Graphics Settings
+
+---
+
+### Multi-Monitor Issues
+
+**Symptom:** Wrong monitor captured or invalid monitor index
+
+**Causes:**
+1. **Monitor Configuration Changed**: Monitors added/removed/rearranged
+   - Solution: Re-enumerate monitors using `MonitorEnumerator.GetAllMonitors()`
+   - Detection: Subscribe to Windows display change notifications
+
+2. **Monitor Index Mismatch**: Index doesn't match expected physical position
+   - Windows assigns indices based on connection order, not physical position
+   - Solution: Use `MonitorInfo.DeviceName` or `IsPrimary` to identify monitors
+
+---
+
+### Common Questions
+
+**Q: Can I capture minimized windows?**
+A: No, Windows Graphics Capture API cannot capture minimized windows. The window must be visible (though it can be obscured by other windows).
+
+**Q: Why do I get black frames occasionally?**
+A: This can happen if the source is temporarily unavailable (e.g., fullscreen transition, resolution change). Usually recovers automatically.
+
+**Q: Can I capture mouse cursor?**
+A: Yes, set `CaptureConfiguration.IncludeCursor = true` globally or per-session. Note: This captures the hardware cursor as rendered by Windows.
+
+**Q: Does this work on Windows 11?**
+A: Yes, Windows 11 includes the Windows Graphics Capture API. All features are fully supported.
+
+**Q: Can I capture content from another machine?**
+A: No, this captures local content only. Cannot capture content from remote machines or VMs running on other hosts.
+
+**Q: Is there a performance difference between capture types?**
+A: Window and monitor capture have similar performance. Region capture may be slightly faster for small regions due to less data transfer.
+
+---
+
+### Getting More Help
+
+If you encounter issues not covered here:
+
+1. **Check Windows Event Logs**: Look for DirectX or graphics-related errors
+2. **Verify System Requirements**: Ensure Windows 10 1803+, DirectX 11, proper drivers
+3. **Test with Minimal Example**: Isolate the issue with simplest possible code
+4. **Monitor Resources**: Use Task Manager to check GPU/CPU/Memory usage
+5. **Update Everything**: Windows, .NET Runtime, graphics drivers to latest versions
+
+For library-specific bugs or questions, please report issues with:
+- Windows version (`winver`)
+- DirectX version (`dxdiag`)
+- Graphics hardware
+- Minimal code reproduction
+- Exception messages and stack traces

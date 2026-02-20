@@ -1,0 +1,1379 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>WindowCaptureCL</name>
+    </assembly>
+    <members>
+        <member name="T:WindowCaptureCL.Capture">
+            <summary>
+            Static facade class providing the main entry points for screen and window capture operations.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Capture.FromWindow(System.IntPtr)">
+            <summary>
+            Creates a capture session for the specified window.
+            </summary>
+            <param name="windowHandle">The handle to the window to capture.</param>
+            <returns>An <see cref="T:WindowCaptureCL.ICaptureSession"/> that can be used to capture frames from the window.</returns>
+            <exception cref="T:System.ArgumentException">Thrown when <paramref name="windowHandle"/> is <see cref="F:System.IntPtr.Zero"/>.</exception>
+            <exception cref="T:WindowCaptureCL.WindowNotFoundException">Thrown when the window handle is invalid or the window no longer exists.</exception>
+            <exception cref="T:WindowCaptureCL.GraphicsCaptureNotSupportedException">Thrown when Windows Graphics Capture is not supported on the current system.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.Capture.FromScreen(System.Int32)">
+            <summary>
+            Creates a capture session for a monitor.
+            </summary>
+            <param name="monitorIndex">The zero-based index of the monitor to capture. 0 represents the primary monitor.</param>
+            <returns>An <see cref="T:WindowCaptureCL.ICaptureSession"/> that can be used to capture frames from the monitor.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown when <paramref name="monitorIndex"/> is negative.</exception>
+            <exception cref="T:WindowCaptureCL.InvalidMonitorException">Thrown when the monitor index is out of range or the monitor is not found.</exception>
+            <exception cref="T:WindowCaptureCL.GraphicsCaptureNotSupportedException">Thrown when Windows Graphics Capture is not supported on the current system.</exception>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:WindowCaptureCL.Capture.FromScreenRegion(System.Int32,System.Drawing.Rectangle)" -->
+        <member name="T:WindowCaptureCL.CaptureConfiguration">
+            <summary>
+            Configuration settings for a capture session.
+            Provides both global default settings and per-session configuration.
+            </summary>
+        </member>
+        <member name="F:WindowCaptureCL.CaptureConfiguration.MinimumFPS">
+            <summary>
+            The minimum allowed frames per second value.
+            </summary>
+        </member>
+        <member name="F:WindowCaptureCL.CaptureConfiguration.MaximumFPS">
+            <summary>
+            The maximum allowed frames per second value.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureConfiguration.IncludeCursor">
+            <summary>
+            Gets or sets the global default value for cursor inclusion in captures.
+            This setting is applied to all new capture sessions unless overridden.
+            Default is false.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureConfiguration.DrawBorder">
+            <summary>
+            Gets or sets the global default value for drawing borders around captured windows.
+            This setting is applied to all new capture sessions unless overridden.
+            Default is false.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureConfiguration.DefaultTargetFPS">
+            <summary>
+            Gets or sets the global default target FPS for new capture sessions.
+            Must be between <see cref="F:WindowCaptureCL.CaptureConfiguration.MinimumFPS"/> and <see cref="F:WindowCaptureCL.CaptureConfiguration.MaximumFPS"/>.
+            Default is 30.
+            </summary>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown when the value is less than 1 or greater than 120.</exception>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureConfiguration.MaxFramesPerSecond">
+            <summary>
+            Gets or sets the maximum frames per second for continuous capture.
+            Default is 30 FPS.
+            </summary>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown when the value is less than 1 or greater than 120.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureConfiguration.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureConfiguration"/> class with default settings.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureConfiguration.Clone">
+            <summary>
+            Creates a copy of this configuration.
+            </summary>
+            <returns>A new <see cref="T:WindowCaptureCL.CaptureConfiguration"/> instance with the same settings.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureConfiguration.Validate">
+            <summary>
+            Validates the configuration settings.
+            </summary>
+            <exception cref="T:WindowCaptureCL.InvalidConfigurationException">Thrown when the configuration is invalid.</exception>
+        </member>
+        <member name="T:WindowCaptureCL.CapturedFrame">
+            <summary>
+            Represents a single captured frame with associated metadata.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CapturedFrame.Bitmap">
+            <summary>
+            Gets the bitmap data of the captured frame.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CapturedFrame.Timestamp">
+            <summary>
+            Gets the timestamp when the frame was captured.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CapturedFrame.Width">
+            <summary>
+            Gets the width of the frame in pixels.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CapturedFrame.Height">
+            <summary>
+            Gets the height of the frame in pixels.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CapturedFrame.#ctor(System.Drawing.Bitmap,System.DateTime)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CapturedFrame"/> class.
+            </summary>
+            <param name="bitmap">The bitmap data of the captured frame.</param>
+            <param name="timestamp">The timestamp when the frame was captured.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="bitmap"/> is null.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.CapturedFrame.Save(System.String)">
+            <summary>
+            Saves the captured frame to a file.
+            </summary>
+            <param name="filePath">The path where the frame should be saved.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="filePath"/> is null.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown when the frame has been disposed.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.CapturedFrame.Save(System.String,System.Drawing.Imaging.ImageFormat)">
+            <summary>
+            Saves the captured frame to a file with the specified format.
+            </summary>
+            <param name="filePath">The path where the frame should be saved.</param>
+            <param name="format">The image format to use.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="filePath"/> is null.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown when the frame has been disposed.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.CapturedFrame.Dispose">
+            <summary>
+            Releases all resources used by this <see cref="T:WindowCaptureCL.CapturedFrame"/>.
+            </summary>
+        </member>
+        <member name="T:WindowCaptureCL.CaptureErrorEventArgs">
+            <summary>
+            Provides data for the <see cref="E:WindowCaptureCL.ICaptureSession.CaptureError"/> event.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureErrorEventArgs.Exception">
+            <summary>
+            Gets the exception that caused the error.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureErrorEventArgs.Timestamp">
+            <summary>
+            Gets the timestamp when the error occurred.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureErrorEventArgs.CanContinue">
+            <summary>
+            Gets a value indicating whether the capture session can continue after this error.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureErrorEventArgs.#ctor(System.Exception,System.DateTime,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureErrorEventArgs"/> class.
+            </summary>
+            <param name="exception">The exception that caused the error.</param>
+            <param name="timestamp">The timestamp when the error occurred.</param>
+            <param name="canContinue">Indicates whether the capture session can continue after this error.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="exception"/> is null.</exception>
+        </member>
+        <member name="T:WindowCaptureCL.CaptureSourceInfo">
+            <summary>
+            Provides information about a capture source (window, monitor, or region).
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceInfo.Id">
+            <summary>
+            Gets the unique identifier for the capture source.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceInfo.SourceType">
+            <summary>
+            Gets the type of the capture source.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceInfo.DisplayName">
+            <summary>
+            Gets the display name of the capture source (window title or monitor name).
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceInfo.Width">
+            <summary>
+            Gets the width of the capture source in pixels.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceInfo.Height">
+            <summary>
+            Gets the height of the capture source in pixels.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceInfo.WindowHandle">
+            <summary>
+            Gets the window handle if the source type is Window, otherwise IntPtr.Zero.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceInfo.MonitorIndex">
+            <summary>
+            Gets the monitor index if the source type is Monitor or Region, otherwise -1.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceInfo.Region">
+            <summary>
+            Gets the capture region if the source type is Region, otherwise Rectangle.Empty.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureSourceInfo.#ctor(System.Object,WindowCaptureCL.CaptureSourceType,System.String,System.Int32,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureSourceInfo"/> class.
+            </summary>
+            <param name="id">The unique identifier for the capture source.</param>
+            <param name="sourceType">The type of the capture source.</param>
+            <param name="displayName">The display name of the capture source.</param>
+            <param name="width">The width of the capture source in pixels (0 if not yet determined).</param>
+            <param name="height">The height of the capture source in pixels (0 if not yet determined).</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="id"/> or <paramref name="displayName"/> is null.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureSourceInfo.#ctor(System.Int32,System.Drawing.Rectangle,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureSourceInfo"/> class for region capture.
+            </summary>
+            <param name="monitorIndex">The monitor index.</param>
+            <param name="region">The capture region.</param>
+            <param name="displayName">The display name of the capture source.</param>
+        </member>
+        <member name="T:WindowCaptureCL.CaptureSourceType">
+            <summary>
+            Specifies the type of capture source.
+            </summary>
+        </member>
+        <member name="F:WindowCaptureCL.CaptureSourceType.Window">
+            <summary>
+            Capture source is a window.
+            </summary>
+        </member>
+        <member name="F:WindowCaptureCL.CaptureSourceType.Monitor">
+            <summary>
+            Capture source is a full monitor/screen.
+            </summary>
+        </member>
+        <member name="F:WindowCaptureCL.CaptureSourceType.Region">
+            <summary>
+            Capture source is a region of a monitor/screen.
+            </summary>
+        </member>
+        <member name="T:WindowCaptureCL.CaptureStoppedEventArgs">
+            <summary>
+            Provides data for capture session stopped events.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureStoppedEventArgs.Reason">
+            <summary>
+            Gets the reason why the capture session stopped.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureStoppedEventArgs.Exception">
+            <summary>
+            Gets the exception that caused the capture to stop, if Reason is Error.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureStoppedEventArgs.#ctor(WindowCaptureCL.CaptureStopReason,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureStoppedEventArgs"/> class.
+            </summary>
+            <param name="reason">The reason why the capture stopped.</param>
+            <param name="exception">The exception that caused the stop, if applicable.</param>
+        </member>
+        <member name="T:WindowCaptureCL.CaptureStopReason">
+            <summary>
+            Specifies the reason why a capture session stopped.
+            </summary>
+        </member>
+        <member name="F:WindowCaptureCL.CaptureStopReason.UserRequested">
+            <summary>
+            The capture was stopped by the user calling Stop().
+            </summary>
+        </member>
+        <member name="F:WindowCaptureCL.CaptureStopReason.SourceClosed">
+            <summary>
+            The capture source (window or monitor) was closed or became invalid.
+            </summary>
+        </member>
+        <member name="F:WindowCaptureCL.CaptureStopReason.Error">
+            <summary>
+            The capture stopped due to an error.
+            </summary>
+        </member>
+        <member name="T:WindowCaptureCL.CaptureException">
+            <summary>
+            Base exception class for all WindowCaptureCL errors.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.GraphicsCaptureNotSupportedException">
+            <summary>
+            Exception thrown when Windows Graphics Capture API is not supported on the current system.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.GraphicsCaptureNotSupportedException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.GraphicsCaptureNotSupportedException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.GraphicsCaptureNotSupportedException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.GraphicsCaptureNotSupportedException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.GraphicsCaptureNotSupportedException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.GraphicsCaptureNotSupportedException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.CaptureSourceNotFoundException">
+            <summary>
+            Exception thrown when a requested capture source (window, screen) cannot be found.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureSourceNotFoundException.SourceId">
+            <summary>
+            Gets the identifier of the source that was not found.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureSourceNotFoundException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureSourceNotFoundException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureSourceNotFoundException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureSourceNotFoundException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureSourceNotFoundException.#ctor(System.String,System.Object)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureSourceNotFoundException"/> class with a specified error message
+            and source identifier.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="sourceId">The identifier of the source that was not found.</param>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureSourceNotFoundException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureSourceNotFoundException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureSourceNotFoundException.#ctor(System.String,System.Object,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureSourceNotFoundException"/> class with a specified error message,
+            source identifier, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="sourceId">The identifier of the source that was not found.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.InvalidCaptureStateException">
+            <summary>
+            Exception thrown when a capture source is not in the expected state for the requested operation.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.InvalidCaptureStateException.CurrentState">
+            <summary>
+            Gets the current state of the capture session when the exception was thrown.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidCaptureStateException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidCaptureStateException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidCaptureStateException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidCaptureStateException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidCaptureStateException.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidCaptureStateException"/> class with a specified error message
+            and current state.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="currentState">The current state of the capture session.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidCaptureStateException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidCaptureStateException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidCaptureStateException.#ctor(System.String,System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidCaptureStateException"/> class with a specified error message,
+            current state, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="currentState">The current state of the capture session.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.DirectXException">
+            <summary>
+            Exception thrown when DirectX device initialization or operations fail.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.DirectXException.HResult">
+            <summary>
+            Gets the HRESULT error code from the DirectX operation, if available.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.DirectXException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.DirectXException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.DirectXException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.DirectXException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.DirectXException.#ctor(System.String,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.DirectXException"/> class with a specified error message
+            and HRESULT code.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="hresult">The HRESULT error code from the DirectX operation.</param>
+        </member>
+        <member name="M:WindowCaptureCL.DirectXException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.DirectXException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.DirectXException.#ctor(System.String,System.Int32,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.DirectXException"/> class with a specified error message,
+            HRESULT code, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="hresult">The HRESULT error code from the DirectX operation.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.FrameCaptureException">
+            <summary>
+            Exception thrown when frame capture operations fail.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.FrameCaptureException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.FrameCaptureException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.FrameCaptureException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.FrameCaptureException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.FrameCaptureException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.FrameCaptureException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.ResourceAllocationException">
+            <summary>
+            Exception thrown when resource allocation or management operations fail.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.ResourceAllocationException.ResourceName">
+            <summary>
+            Gets the name of the resource that failed to allocate, if available.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.ResourceAllocationException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.ResourceAllocationException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.ResourceAllocationException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.ResourceAllocationException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.ResourceAllocationException.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.ResourceAllocationException"/> class with a specified error message
+            and resource name.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="resourceName">The name of the resource that failed to allocate.</param>
+        </member>
+        <member name="M:WindowCaptureCL.ResourceAllocationException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.ResourceAllocationException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.ResourceAllocationException.#ctor(System.String,System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.ResourceAllocationException"/> class with a specified error message,
+            resource name, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="resourceName">The name of the resource that failed to allocate.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.InvalidConfigurationException">
+            <summary>
+            Exception thrown when configuration validation fails.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.InvalidConfigurationException.PropertyName">
+            <summary>
+            Gets the name of the configuration property that is invalid, if available.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidConfigurationException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidConfigurationException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidConfigurationException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidConfigurationException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidConfigurationException.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidConfigurationException"/> class with a specified error message
+            and property name.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="propertyName">The name of the configuration property that is invalid.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidConfigurationException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidConfigurationException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidConfigurationException.#ctor(System.String,System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidConfigurationException"/> class with a specified error message,
+            property name, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="propertyName">The name of the configuration property that is invalid.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.UnsupportedOperationException">
+            <summary>
+            Exception thrown when a requested operation or feature is not supported on the current platform or configuration.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.UnsupportedOperationException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.UnsupportedOperationException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.UnsupportedOperationException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.UnsupportedOperationException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.UnsupportedOperationException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.UnsupportedOperationException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.CaptureTargetInvalidException">
+            <summary>
+            Abstract base exception for invalid capture targets (windows, monitors, regions).
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.CaptureTargetInvalidException.Target">
+            <summary>
+            Gets the invalid target identifier.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureTargetInvalidException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureTargetInvalidException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureTargetInvalidException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureTargetInvalidException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureTargetInvalidException.#ctor(System.String,System.Object)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureTargetInvalidException"/> class with a specified error message and target.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="target">The invalid target identifier.</param>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureTargetInvalidException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureTargetInvalidException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.CaptureTargetInvalidException.#ctor(System.String,System.Object,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.CaptureTargetInvalidException"/> class with a specified error message,
+            target, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="target">The invalid target identifier.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.WindowNotFoundException">
+            <summary>
+            Exception thrown when a specified window handle is not found or is invalid.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.WindowNotFoundException.WindowHandle">
+            <summary>
+            Gets the window handle that was not found.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.WindowNotFoundException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.WindowNotFoundException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.WindowNotFoundException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.WindowNotFoundException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.WindowNotFoundException.#ctor(System.String,System.IntPtr)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.WindowNotFoundException"/> class with a specified error message
+            and window handle.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="windowHandle">The window handle that was not found.</param>
+        </member>
+        <member name="M:WindowCaptureCL.WindowNotFoundException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.WindowNotFoundException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.WindowNotFoundException.#ctor(System.String,System.IntPtr,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.WindowNotFoundException"/> class with a specified error message,
+            window handle, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="windowHandle">The window handle that was not found.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.InvalidMonitorException">
+            <summary>
+            Exception thrown when a specified monitor index is invalid or out of range.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.InvalidMonitorException.MonitorIndex">
+            <summary>
+            Gets the monitor index that was invalid.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidMonitorException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidMonitorException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidMonitorException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidMonitorException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidMonitorException.#ctor(System.String,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidMonitorException"/> class with a specified error message
+            and monitor index.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="monitorIndex">The monitor index that was invalid.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidMonitorException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidMonitorException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.InvalidMonitorException.#ctor(System.String,System.Int32,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.InvalidMonitorException"/> class with a specified error message,
+            monitor index, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="monitorIndex">The monitor index that was invalid.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.RegionOutOfBoundsException">
+            <summary>
+            Exception thrown when a specified capture region extends beyond monitor bounds.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.RegionOutOfBoundsException.AttemptedRegion">
+            <summary>
+            Gets the region that was attempted to be captured.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.RegionOutOfBoundsException.MonitorSize">
+            <summary>
+            Gets the size of the monitor that was targeted.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.RegionOutOfBoundsException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.RegionOutOfBoundsException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.RegionOutOfBoundsException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.RegionOutOfBoundsException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.RegionOutOfBoundsException.#ctor(System.String,System.Drawing.Rectangle,System.Drawing.Size)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.RegionOutOfBoundsException"/> class with a specified error message,
+            attempted region, and monitor size.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="attemptedRegion">The region that was attempted to be captured.</param>
+            <param name="monitorSize">The size of the monitor.</param>
+        </member>
+        <member name="M:WindowCaptureCL.RegionOutOfBoundsException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.RegionOutOfBoundsException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="M:WindowCaptureCL.RegionOutOfBoundsException.#ctor(System.String,System.Drawing.Rectangle,System.Drawing.Size,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.RegionOutOfBoundsException"/> class with a specified error message,
+            attempted region, monitor size, and inner exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="attemptedRegion">The region that was attempted to be captured.</param>
+            <param name="monitorSize">The size of the monitor.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.SessionAlreadyStartedException">
+            <summary>
+            Exception thrown when attempting to start a capture session that is already running.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.SessionAlreadyStartedException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.SessionAlreadyStartedException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.SessionAlreadyStartedException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.SessionAlreadyStartedException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.SessionAlreadyStartedException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.SessionAlreadyStartedException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.SessionNotStartedException">
+            <summary>
+            Exception thrown when attempting to stop or perform operations on a capture session that is not running.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.SessionNotStartedException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.SessionNotStartedException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.SessionNotStartedException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.SessionNotStartedException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.SessionNotStartedException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.SessionNotStartedException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.GraphicsDeviceException">
+            <summary>
+            Exception thrown when graphics device operations fail.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.GraphicsDeviceException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.GraphicsDeviceException"/> class.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.GraphicsDeviceException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.GraphicsDeviceException"/> class with a specified error message.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+        </member>
+        <member name="M:WindowCaptureCL.GraphicsDeviceException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.GraphicsDeviceException"/> class with a specified error message
+            and a reference to the inner exception that is the cause of this exception.
+            </summary>
+            <param name="message">The error message that explains the reason for the exception.</param>
+            <param name="innerException">The exception that is the cause of the current exception.</param>
+        </member>
+        <member name="T:WindowCaptureCL.FrameReadyEventArgs">
+            <summary>
+            Provides data for the <see cref="E:WindowCaptureCL.ICaptureSession.FrameReady"/> event.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.FrameReadyEventArgs.Frame">
+            <summary>
+            Gets the captured frame as a <see cref="T:System.Drawing.Bitmap"/>.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.FrameReadyEventArgs.Timestamp">
+            <summary>
+            Gets the timestamp when the frame was captured.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.FrameReadyEventArgs.FrameNumber">
+            <summary>
+            Gets the frame sequence number since the capture session started.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.FrameReadyEventArgs.#ctor(System.Drawing.Bitmap,System.DateTime,System.UInt64)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.FrameReadyEventArgs"/> class.
+            </summary>
+            <param name="frame">The captured frame.</param>
+            <param name="timestamp">The timestamp when the frame was captured.</param>
+            <param name="frameNumber">The frame sequence number.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="frame"/> is null.</exception>
+        </member>
+        <member name="T:WindowCaptureCL.ICaptureSession">
+            <summary>
+            Represents an active capture session for a window, monitor, or screen region.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.ICaptureSession.SourceInfo">
+            <summary>
+            Gets information about the capture source.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.ICaptureSession.IsActive">
+            <summary>
+            Gets a value indicating whether the capture session is currently active.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.ICaptureSession.Configuration">
+            <summary>
+            Gets the configuration used by this capture session.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.ICaptureSession.TotalFramesCaptured">
+            <summary>
+            Gets the total number of frames captured since the session started.
+            </summary>
+        </member>
+        <member name="E:WindowCaptureCL.ICaptureSession.FrameReady">
+            <summary>
+            Event raised when a new frame is ready in continuous capture mode.
+            </summary>
+        </member>
+        <member name="E:WindowCaptureCL.ICaptureSession.CaptureError">
+            <summary>
+            Event raised when an error occurs during capture.
+            </summary>
+        </member>
+        <member name="E:WindowCaptureCL.ICaptureSession.CaptureStopped">
+            <summary>
+            Event raised when the capture session stops.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.ICaptureSession.StartCapture">
+            <summary>
+            Starts continuous frame capture.
+            Frames will be delivered via the <see cref="E:WindowCaptureCL.ICaptureSession.FrameReady"/> event.
+            </summary>
+            <exception cref="T:WindowCaptureCL.InvalidCaptureStateException">Thrown when the session is already active.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown when the session has been disposed.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.ICaptureSession.StopCapture">
+            <summary>
+            Stops continuous frame capture.
+            </summary>
+            <exception cref="T:WindowCaptureCL.InvalidCaptureStateException">Thrown when the session is not active.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown when the session has been disposed.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.ICaptureSession.CaptureFrame">
+            <summary>
+            Captures a single frame immediately.
+            </summary>
+            <returns>A <see cref="T:WindowCaptureCL.CapturedFrame"/> containing the captured image and metadata.</returns>
+            <exception cref="T:WindowCaptureCL.FrameCaptureException">Thrown when frame capture fails.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown when the session has been disposed.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.ICaptureSession.CaptureFrameAsync(System.Threading.CancellationToken)">
+            <summary>
+            Captures a single frame asynchronously.
+            </summary>
+            <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+            <returns>A task representing the asynchronous operation, containing the captured frame.</returns>
+            <exception cref="T:WindowCaptureCL.FrameCaptureException">Thrown when frame capture fails.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown when the session has been disposed.</exception>
+            <exception cref="T:System.OperationCanceledException">Thrown when the operation is canceled.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.ICaptureSession.UpdateConfiguration(WindowCaptureCL.CaptureConfiguration)">
+            <summary>
+            Updates the configuration for this capture session.
+            Changes take effect immediately, even during active capture.
+            </summary>
+            <param name="configuration">The new configuration settings.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="configuration"/> is null.</exception>
+            <exception cref="T:WindowCaptureCL.InvalidConfigurationException">Thrown when the configuration is invalid.</exception>
+            <exception cref="T:System.ObjectDisposedException">Thrown when the session has been disposed.</exception>
+        </member>
+        <member name="T:WindowCaptureCL.Core.CaptureSession">
+            <summary>
+            Implements a capture session for capturing frames from windows, monitors, or screen regions.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Core.CaptureSession.#ctor(WindowCaptureCL.CaptureSourceInfo)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.Core.CaptureSession"/> class.
+            </summary>
+            <param name="captureSource">The capture source information.</param>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.DirectX.DirectXDeviceManager">
+            <summary>
+            Manages the lifecycle of DirectX devices required for screen capture.
+            Thread-safe singleton implementation.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.DirectX.DirectXDeviceManager.Instance">
+            <summary>
+            Gets the singleton instance of the <see cref="T:WindowCaptureCL.Infrastructure.DirectX.DirectXDeviceManager"/>.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.DirectX.DirectXDeviceManager.Device">
+            <summary>
+            Gets the Direct3D11 device.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.DirectX.DirectXDeviceManager.DeviceContext">
+            <summary>
+            Gets the Direct3D11 device context.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.DirectX.DirectXDeviceManager.DxgiDevice">
+            <summary>
+            Gets the DXGI device interface.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.DirectX.DirectXDeviceManager.CreateStagingTexture(System.Int32,System.Int32)">
+            <summary>
+            Creates a staging texture for CPU readback of captured frames.
+            </summary>
+            <param name="width">The width of the texture.</param>
+            <param name="height">The height of the texture.</param>
+            <returns>A staging texture with CPU read access.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.DirectX.DirectXDeviceManager.Dispose">
+            <summary>
+            Releases all resources used by the DirectX device manager.
+            </summary>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.DirectX.FrameProcessor">
+            <summary>
+            Processes captured DirectX frames and converts them to Bitmap format.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.DirectX.FrameProcessor.ConvertTextureToBitmap(Vortice.Direct3D11.ID3D11Device,Vortice.Direct3D11.ID3D11DeviceContext,Vortice.Direct3D11.ID3D11Texture2D)">
+            <summary>
+            Converts a Direct3D11 texture to a Bitmap.
+            </summary>
+            <param name="device">The D3D11 device.</param>
+            <param name="deviceContext">The D3D11 device context.</param>
+            <param name="texture">The source texture to convert.</param>
+            <returns>A Bitmap containing the texture data.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when any parameter is null.</exception>
+            <exception cref="T:WindowCaptureCL.FrameCaptureException">Thrown when conversion fails.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.DirectX.FrameProcessor.ConvertTextureToBitmap(Vortice.Direct3D11.ID3D11Device,Vortice.Direct3D11.ID3D11DeviceContext,Vortice.Direct3D11.ID3D11Texture2D,System.Drawing.Rectangle)">
+            <summary>
+            Converts a region of a Direct3D11 texture to a Bitmap.
+            </summary>
+            <param name="device">The D3D11 device.</param>
+            <param name="deviceContext">The D3D11 device context.</param>
+            <param name="texture">The source texture to convert.</param>
+            <param name="region">The region to crop from the texture.</param>
+            <returns>A Bitmap containing the cropped texture data.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when any parameter is null.</exception>
+            <exception cref="T:WindowCaptureCL.FrameCaptureException">Thrown when conversion fails.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.DirectX.FrameProcessor.ConvertTextureToBitmapAsync(Vortice.Direct3D11.ID3D11Device,Vortice.Direct3D11.ID3D11DeviceContext,Vortice.Direct3D11.ID3D11Texture2D,System.Threading.CancellationToken)">
+            <summary>
+            Converts a Direct3D11 texture to a Bitmap asynchronously.
+            </summary>
+            <param name="device">The D3D11 device.</param>
+            <param name="deviceContext">The D3D11 device context.</param>
+            <param name="texture">The source texture to convert.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+            <returns>A task that represents the asynchronous operation, containing the converted Bitmap.</returns>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.Direct3D11Helper">
+            <summary>
+            Helper class for creating WinRT Direct3D11 devices from native DXGI devices.
+            Uses COM interop to bridge between native DirectX and WinRT APIs.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.Direct3D11Helper.CreateDevice(Vortice.DXGI.IDXGIDevice)">
+            <summary>
+            Creates a WinRT IDirect3DDevice from a native DXGI device.
+            </summary>
+            <param name="dxgiDevice">The DXGI device to wrap.</param>
+            <returns>A WinRT IDirect3DDevice instance.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.Direct3D11Helper.GetD3D11Texture2DFromSurface(Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface)">
+            <summary>
+            Extracts a native ID3D11Texture2D from a WinRT IDirect3DSurface.
+            </summary>
+            <param name="surface">The WinRT surface.</param>
+            <returns>The native D3D11 texture.</returns>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.GraphicsCaptureHelper">
+            <summary>
+            Helper class for working with Windows Graphics Capture API.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.GraphicsCaptureHelper.IsSupported">
+            <summary>
+            Checks if Windows Graphics Capture API is supported on the current system.
+            </summary>
+            <returns>True if WGC is supported, false otherwise.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.GraphicsCaptureHelper.EnsureSupported">
+            <summary>
+            Ensures that Windows Graphics Capture API is supported, throwing an exception if not.
+            </summary>
+            <exception cref="T:WindowCaptureCL.GraphicsCaptureNotSupportedException">Thrown when WGC is not supported.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.GraphicsCaptureHelper.CreateDirect3DDevice(Vortice.DXGI.IDXGIDevice)">
+            <summary>
+            Creates a Direct3D11 device wrapper for use with Windows Graphics Capture.
+            </summary>
+            <param name="dxgiDevice">The DXGI device to wrap.</param>
+            <returns>An IDirect3DDevice instance.</returns>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.GraphicsCaptureItemHelper">
+            <summary>
+            Helper class for creating GraphicsCaptureItem instances for windows and monitors.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.GraphicsCaptureItemHelper.CreateForWindow(System.IntPtr)">
+            <summary>
+            Creates a GraphicsCaptureItem for a window handle.
+            </summary>
+            <param name="hwnd">The window handle.</param>
+            <returns>A GraphicsCaptureItem for the window.</returns>
+            <exception cref="T:WindowCaptureCL.CaptureSourceNotFoundException">Thrown when the window cannot be captured.</exception>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.GraphicsCaptureItemHelper.CreateForMonitor(System.IntPtr)">
+            <summary>
+            Creates a GraphicsCaptureItem for a monitor handle.
+            </summary>
+            <param name="hmonitor">The monitor handle.</param>
+            <returns>A GraphicsCaptureItem for the monitor.</returns>
+            <exception cref="T:WindowCaptureCL.CaptureSourceNotFoundException">Thrown when the monitor cannot be captured.</exception>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.GraphicsCaptureItemHelper.CaptureHelper">
+            <summary>
+            Wrapper class for Windows.Graphics.Capture.Interop APIs.
+            </summary>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.MonitorEnumerator">
+            <summary>
+            Provides methods for enumerating monitors on the system.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.MonitorEnumerator.GetAllMonitors">
+            <summary>
+            Gets all monitors currently connected to the system.
+            </summary>
+            <returns>A list of all monitors.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.MonitorEnumerator.GetPrimaryMonitor">
+            <summary>
+            Gets the primary monitor.
+            </summary>
+            <returns>Information about the primary monitor, or null if not found.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.MonitorEnumerator.GetMonitorByIndex(System.Int32)">
+            <summary>
+            Gets a monitor by its index.
+            </summary>
+            <param name="index">The zero-based index of the monitor.</param>
+            <returns>Information about the monitor, or null if not found.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.MonitorEnumerator.GetMonitorByDeviceName(System.String)">
+            <summary>
+            Gets a monitor by its device name.
+            </summary>
+            <param name="deviceName">The device name (e.g., "\\\\.\\DISPLAY1").</param>
+            <returns>Information about the monitor, or null if not found.</returns>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.MonitorInfo">
+            <summary>
+            Represents information about a monitor.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.MonitorInfo.Handle">
+            <summary>
+            Gets the monitor handle (HMONITOR).
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.MonitorInfo.DeviceName">
+            <summary>
+            Gets the device name (e.g., "\\\\.\\DISPLAY1").
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.MonitorInfo.Width">
+            <summary>
+            Gets the monitor width in pixels.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.MonitorInfo.Height">
+            <summary>
+            Gets the monitor height in pixels.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.MonitorInfo.IsPrimary">
+            <summary>
+            Gets whether this is the primary monitor.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.MonitorInfo.#ctor(System.IntPtr,System.String,System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.Infrastructure.WGC.MonitorInfo"/> class.
+            </summary>
+            <param name="handle">The monitor handle.</param>
+            <param name="deviceName">The device name.</param>
+            <param name="width">The monitor width in pixels.</param>
+            <param name="height">The monitor height in pixels.</param>
+            <param name="isPrimary">Whether this is the primary monitor.</param>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.WgcInterop">
+            <summary>
+            Static class providing P/Invoke methods and helpers for Windows Graphics Capture API.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WgcInterop.GetWindowRect(System.IntPtr,WindowCaptureCL.Infrastructure.WGC.WgcInterop.RECT@)">
+            <summary>
+            Retrieves the dimensions of the bounding rectangle of the specified window.
+            </summary>
+            <param name="hWnd">A handle to the window.</param>
+            <param name="lpRect">A pointer to a RECT structure that receives the screen coordinates of the upper-left and lower-right corners of the window.</param>
+            <returns>If the function succeeds, the return value is true. If the function fails, the return value is false.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WgcInterop.IsWindow(System.IntPtr)">
+            <summary>
+            Determines whether the specified window handle identifies an existing window.
+            </summary>
+            <param name="hWnd">A handle to the window to be tested.</param>
+            <returns>If the window handle identifies an existing window, the return value is true. Otherwise, it returns false.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WgcInterop.IsWindowVisible(System.IntPtr)">
+            <summary>
+            Determines whether the specified window is visible.
+            </summary>
+            <param name="hWnd">A handle to the window to be tested.</param>
+            <returns>If the window is visible, the return value is true. Otherwise, it returns false.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WgcInterop.IsIconic(System.IntPtr)">
+            <summary>
+            Determines whether the specified window is minimized (iconic).
+            </summary>
+            <param name="hWnd">A handle to the window to be tested.</param>
+            <returns>If the window is minimized, the return value is true. Otherwise, it returns false.</returns>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.WgcInterop.RECT">
+            <summary>
+            Represents a rectangle defined by the coordinates of its upper-left and lower-right corners.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.WgcInterop.RECT.Width">
+            <summary>
+            Gets the width of the rectangle.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.WgcInterop.RECT.Height">
+            <summary>
+            Gets the height of the rectangle.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WgcInterop.GetMonitorCount">
+            <summary>
+            Gets the number of monitors connected to the system.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WgcInterop.GetMonitorBounds(System.Int32)">
+            <summary>
+            Gets the bounds of the monitor at the specified index.
+            </summary>
+            <param name="monitorIndex">The zero-based index of the monitor.</param>
+            <returns>A Rectangle containing the monitor's bounds.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WgcInterop.GetMonitorHandle(System.Int32)">
+            <summary>
+            Gets the HMONITOR handle for the monitor at the specified index.
+            </summary>
+            <param name="monitorIndex">The zero-based index of the monitor.</param>
+            <returns>The HMONITOR handle.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WgcInterop.ValidateRegion(System.Int32,System.Drawing.Rectangle)">
+            <summary>
+            Validates that a rectangular region is within the bounds of the specified monitor.
+            </summary>
+            <param name="monitorIndex">The zero-based index of the monitor.</param>
+            <param name="region">The region to validate.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown when monitorIndex is invalid.</exception>
+            <exception cref="T:WindowCaptureCL.RegionOutOfBoundsException">Thrown when the region extends beyond the monitor bounds.</exception>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.WindowEnumerator">
+            <summary>
+            Provides methods for enumerating and finding windows on the system.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WindowEnumerator.FindWindow(System.IntPtr)">
+            <summary>
+            Finds a window by its handle (HWND).
+            </summary>
+            <param name="hwnd">The window handle.</param>
+            <returns>Information about the window, or null if not found.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WindowEnumerator.FindWindowByProcessId(System.Int32)">
+            <summary>
+            Finds a window by its process ID.
+            </summary>
+            <param name="processId">The process ID.</param>
+            <returns>Information about the first window found for the process, or null if not found.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WindowEnumerator.FindWindowByTitle(System.String)">
+            <summary>
+            Finds a window by its title (exact match).
+            </summary>
+            <param name="title">The exact window title.</param>
+            <returns>Information about the window, or null if not found.</returns>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WindowEnumerator.FindWindowsByPartialTitle(System.String)">
+            <summary>
+            Finds windows whose title contains the specified text.
+            </summary>
+            <param name="partialTitle">The text to search for in window titles.</param>
+            <returns>A list of matching windows.</returns>
+        </member>
+        <member name="T:WindowCaptureCL.Infrastructure.WGC.WindowInfo">
+            <summary>
+            Represents information about a window.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.WindowInfo.Handle">
+            <summary>
+            Gets the window handle (HWND).
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.WindowInfo.Title">
+            <summary>
+            Gets the window title.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.WindowInfo.Width">
+            <summary>
+            Gets the window width in pixels.
+            </summary>
+        </member>
+        <member name="P:WindowCaptureCL.Infrastructure.WGC.WindowInfo.Height">
+            <summary>
+            Gets the window height in pixels.
+            </summary>
+        </member>
+        <member name="M:WindowCaptureCL.Infrastructure.WGC.WindowInfo.#ctor(System.IntPtr,System.String,System.Int32,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WindowCaptureCL.Infrastructure.WGC.WindowInfo"/> class.
+            </summary>
+            <param name="handle">The window handle.</param>
+            <param name="title">The window title.</param>
+            <param name="width">The window width in pixels.</param>
+            <param name="height">The window height in pixels.</param>
+        </member>
+    </members>
+</doc>

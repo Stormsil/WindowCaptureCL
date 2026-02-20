@@ -6,9 +6,28 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>WindowCaptureCL</AssemblyName>
     <RootNamespace>WindowCaptureCL</RootNamespace>
+
+    <!-- Version Information -->
     <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+
+    <!-- Self-Contained Publishing Settings -->
+    <PublishSelfContained>true</PublishSelfContained>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+
+    <!-- ILRepack Settings for DLL Merging -->
+    <ILRepackEnabled>false</ILRepackEnabled>
+    <ILRepackInternalize>true</ILRepackInternalize>
+    <ILRepackRenameInternalized>true</ILRepackRenameInternalized>
 
     <!-- NuGet Package Metadata -->
     <PackageId>WindowCaptureCL</PackageId>
@@ -24,6 +43,13 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>Initial release with window, monitor, and region capture support.</PackageReleaseNotes>
     <Copyright>Copyright © 2025 WindowCaptureCL Contributors</Copyright>
+
+    <!-- Assembly Attributes -->
+    <AssemblyTitle>WindowCaptureCL</AssemblyTitle>
+    <AssemblyDescription>Windows Graphics Capture Library</AssemblyDescription>
+    <AssemblyCompany>WindowCaptureCL Contributors</AssemblyCompany>
+    <AssemblyProduct>WindowCaptureCL</AssemblyProduct>
+    <AssemblyCopyright>Copyright © 2025 WindowCaptureCL Contributors</AssemblyCopyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,12 +64,41 @@
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
-    <PackageReference Include="Vortice.Direct3D11" Version="3.6.2" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.5.0" />
     <PackageReference Include="Vortice.Win32" Version="2.3.0" />
+    <PackageReference Include="ILRepack.MSBuild.Task" Version="2.0.13" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
   </ItemGroup>
+
+  <!-- ILRepack Target for Merging Dependencies -->
+  <Target Name="MergeDependencies" AfterTargets="Build" Condition="'$(ILRepackEnabled)' == 'true' AND '$(Configuration)' == 'Release'">
+    <PropertyGroup>
+      <ILRepackPath>$(NuGetPackageRoot)ilrepack.msbuild.task\2.0.13\tools\ILRepack.exe</ILRepackPath>
+      <MergedAssembly>$(TargetDir)$(AssemblyName).Merged.dll</MergedAssembly>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <MergeAssemblies Include="$(TargetPath)" />
+      <MergeAssemblies Include="$(TargetDir)Vortice.Direct3D11.dll" />
+      <MergeAssemblies Include="$(TargetDir)Vortice.DirectX.dll" />
+      <MergeAssemblies Include="$(TargetDir)Vortice.DXGI.dll" />
+      <MergeAssemblies Include="$(TargetDir)Vortice.Mathematics.dll" />
+      <MergeAssemblies Include="$(TargetDir)Vortice.Win32.dll" />
+    </ItemGroup>
+
+    <Exec Command="&quot;$(ILRepackPath)&quot; /out:&quot;$(MergedAssembly)&quot; /wildcards /parallel /union /ndebug /copyattrs /allowMultiple /internalize /targetplatform:v4 /xmldocs /usefullpublickeyforreferences %(MergeAssemblies.FullPath)" Condition="Exists('$(ILRepackPath)')" />
+
+    <Copy SourceFiles="$(MergedAssembly)" DestinationFolder="$(TargetDir)" OverwriteReadOnlyFiles="true" Condition="Exists('$(MergedAssembly)')" />
+    <Move SourceFiles="$(MergedAssembly)" DestinationFiles="$(TargetDir)$(AssemblyName).dll" OverwriteReadOnlyFiles="true" Condition="Exists('$(MergedAssembly)')" />
+  </Target>
+
+  <!-- Self-Contained Publish Target -->
+  <Target Name="PublishSelfContainedDll" AfterTargets="Publish">
+    <Message Text="Publishing self-contained DLL to: $(PublishDir)" Importance="high" />
+    <Message Text="Assembly Version: $(Version)" Importance="high" />
+  </Target>
 
 </Project>

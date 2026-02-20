@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace WindowCaptureCL.Infrastructure.WGC;
@@ -6,7 +5,7 @@ namespace WindowCaptureCL.Infrastructure.WGC;
 /// <summary>
 /// Provides methods for enumerating and finding windows on the system.
 /// </summary>
-internal static class WindowEnumerator
+public static partial class WindowEnumerator
 {
     /// <summary>
     /// Finds a window by its handle (HWND).
@@ -130,60 +129,5 @@ internal static class WindowEnumerator
         var builder = new StringBuilder(length + 1);
         GetWindowText(hwnd, builder, builder.Capacity);
         return builder.ToString();
-    }
-
-    #region Win32 Interop
-
-    private delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool IsWindow(IntPtr hwnd);
-
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern int GetWindowText(IntPtr hwnd, StringBuilder lpString, int nMaxCount);
-
-    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-    private static extern int GetWindowTextLength(IntPtr hwnd);
-
-    [DllImport("user32.dll")]
-    private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out int lpdwProcessId);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct RECT
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
-    }
-
-    #endregion
-}
-
-/// <summary>
-/// Represents information about a window.
-/// </summary>
-internal sealed class WindowInfo
-{
-    public IntPtr Handle { get; }
-    public string Title { get; }
-    public int Width { get; }
-    public int Height { get; }
-
-    public WindowInfo(IntPtr handle, string title, int width, int height)
-    {
-        Handle = handle;
-        Title = title;
-        Width = width;
-        Height = height;
     }
 }

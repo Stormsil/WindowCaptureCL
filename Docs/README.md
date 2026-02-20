@@ -178,8 +178,8 @@ for (int i = 0; i < 10; i++)
 - `TotalFramesCaptured` (ulong) - Total frames captured
 
 **Methods:**
-- `CaptureFrame()` ’ CapturedFrame
-- `CaptureFrameAsync()` ’ Task\<CapturedFrame\>
+- `CaptureFrame()` ï¿½ CapturedFrame
+- `CaptureFrameAsync()` ï¿½ Task\<CapturedFrame\>
 - `StartCapture()` - Begin continuous capture
 - `StopCapture()` - End continuous capture
 - `UpdateConfiguration(config)` - Change settings (even during capture)
@@ -223,9 +223,9 @@ for (int i = 0; i < 10; i++)
 
 ## Important Notes for AI Agents
 
-1. **Window Handles**: Use Win32 APIs or `Process.MainWindowHandle` to get window handles.
+1. **Window Handles**: Use `WindowEnumerator` utility class (`WindowCaptureCL.Infrastructure.WGC` namespace) to find windows by title, process ID, or partial title. Alternatively, use Win32 APIs or `Process.MainWindowHandle`.
 
-2. **Monitor Indexing**: Starts at 0. Primary monitor is always 0.
+2. **Monitor Indexing**: Starts at 0. Primary monitor is always 0. Use `MonitorEnumerator` utility class (`WindowCaptureCL.Infrastructure.WGC` namespace) to enumerate all monitors and get detailed information.
 
 3. **Regions**: Coordinates are relative to monitor's top-left corner (0,0).
 
@@ -243,30 +243,117 @@ for (int i = 0; i < 10; i++)
 
 10. **Platform Check**: Always handle `GraphicsCaptureNotSupportedException` for compatibility.
 
-## Getting Window Handles
+## Finding Windows and Monitors
+
+WindowCaptureCL provides built-in utilities to discover windows and monitors before capturing.
+
+### Finding Windows
 
 ```csharp
-// From process
+using WindowCaptureCL.Infrastructure.WGC;
+
+// Method 1: By window title (exact match)
+var windowInfo = WindowEnumerator.FindWindowByTitle("Calculator");
+if (windowInfo != null)
+{
+    Console.WriteLine($"Found: {windowInfo.Title} ({windowInfo.Width}x{windowInfo.Height})");
+    using var session = Capture.FromWindow(windowInfo.Handle);
+    using var frame = session.CaptureFrame();
+    frame.Save("calculator.png");
+}
+
+// Method 2: By partial title (case-insensitive)
+var windows = WindowEnumerator.FindWindowsByPartialTitle("Visual Studio");
+foreach (var window in windows)
+{
+    Console.WriteLine($"Found: {window.Title}");
+}
+
+// Method 3: By process ID
+var process = Process.GetProcessesByName("notepad").FirstOrDefault();
+if (process != null)
+{
+    var windowInfo = WindowEnumerator.FindWindowByProcessId(process.Id);
+    if (windowInfo != null)
+    {
+        using var session = Capture.FromWindow(windowInfo.Handle);
+        // Capture notepad window
+    }
+}
+
+// Method 4: Validate existing window handle
+IntPtr hwnd = /* your handle */;
+var windowInfo = WindowEnumerator.FindWindow(hwnd);
+if (windowInfo != null)
+{
+    // Window is valid and capturable
+}
+```
+
+**WindowInfo Properties:**
+- `Handle` (IntPtr) - Window handle for use with `Capture.FromWindow()`
+- `Title` (string) - Window title
+- `Width`, `Height` (int) - Window dimensions
+
+### Finding Monitors
+
+```csharp
+using WindowCaptureCL.Infrastructure.WGC;
+
+// Method 1: Get all monitors
+var monitors = MonitorEnumerator.GetAllMonitors();
+Console.WriteLine($"Found {monitors.Count} monitor(s)");
+foreach (var monitor in monitors)
+{
+    Console.WriteLine($"{monitor.DeviceName}: {monitor.Width}x{monitor.Height} (Primary: {monitor.IsPrimary})");
+}
+
+// Method 2: Get primary monitor
+var primaryMonitor = MonitorEnumerator.GetPrimaryMonitor();
+if (primaryMonitor != null)
+{
+    Console.WriteLine($"Primary: {primaryMonitor.Width}x{primaryMonitor.Height}");
+    using var session = Capture.FromScreen(0); // Primary is always index 0
+}
+
+// Method 3: Get specific monitor by index
+var monitor = MonitorEnumerator.GetMonitorByIndex(1);
+if (monitor != null)
+{
+    Console.WriteLine($"Monitor 1: {monitor.DeviceName}");
+    using var session = Capture.FromScreen(1);
+}
+
+// Method 4: Get monitor by device name
+var monitor = MonitorEnumerator.GetMonitorByDeviceName("\\\\.\\DISPLAY2");
+if (monitor != null)
+{
+    // Found specific monitor
+}
+```
+
+**MonitorInfo Properties:**
+- `Handle` (IntPtr) - Monitor handle (HMONITOR)
+- `DeviceName` (string) - Device name like "\\\\.\\DISPLAY1"
+- `Width`, `Height` (int) - Monitor dimensions
+- `IsPrimary` (bool) - Whether this is the primary monitor
+
+### Alternative Methods (Without Built-in Utilities)
+
+```csharp
+// Getting window handles from Process
 var process = Process.GetProcessesByName("notepad")[0];
 IntPtr hwnd = process.MainWindowHandle;
 
-// From Win32 API
+// Using Win32 API directly
 [DllImport("user32.dll")]
 static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 IntPtr hwnd = FindWindow(null, "Untitled - Notepad");
-```
 
-## Monitor Information
-
-```csharp
-// System.Windows.Forms.Screen (requires WindowsForms reference)
+// Using System.Windows.Forms.Screen for monitors (requires WindowsForms reference)
 var screens = Screen.AllScreens;
 Console.WriteLine($"Monitor count: {screens.Length}");
-Console.WriteLine($"Primary: {screens[0].Bounds}");
-
-// For WindowCaptureCL, use index:
-// 0 = primary monitor
-// 1, 2, 3... = additional monitors
+// Note: WindowCaptureCL uses index: 0 = primary, 1, 2, 3... = additional
 ```
 
 ## Complete Example

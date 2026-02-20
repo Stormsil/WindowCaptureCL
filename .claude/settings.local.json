@@ -33,7 +33,11 @@
       "Bash(ren:*)",
       "Bash(del WindowCaptureCL.sln)",
       "Bash(dotnet clean:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(dotnet publish:*)",
+      "Bash(if exist publish-tempruntimes dir publish-tempruntimes /s)",
+      "Bash(dir:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File Package-SDK.ps1)"
     ],
     "deny": [],
     "ask": []
